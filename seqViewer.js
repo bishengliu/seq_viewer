@@ -37,7 +37,7 @@ var cSeqArray = formatSeq(cSequence, symbol, ntPerLine);; //array for complement
 //seqWidth and featureWdith will be calculated later
 //define the seqWidth
 var seqTop =5;
-var seqBottom = 5;
+var seqBottom = 10;
 
 var seqWidth = 20;
 //enzyme width
@@ -96,7 +96,7 @@ function formatSeq(sequence, symbol, ntPerLine){
 function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom) { 
     var margin = {top: 20, right: 20, bottom: 20, left: 20};
     width = +$(id).width() - margin.left - margin.right;
-    height = arrayLength * ( seqTop + enzymeWidth  + seqWidth + featureWdith + seqBottom) - margin.top - margin.bottom;
+    height = arrayLength * ( seqTop + enzymeWidth  + seqWidth + featureWdith + seqBottom + features.length) - margin.top - margin.bottom;
     //calculate the width
     var svg = d3.select(id)
                 .append("svg")
@@ -235,7 +235,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      var rectWidth = $("#measure-text-width").text(seqArray[0]).width();
      $("#measure-text-width").remove();
 
-     var coStep = 5; //vertical space between each feature
+     var coStep = 10; //vertical space between each feature
 
      if(coFeatures.length >=1){
      var feature = svgSeq.append("g");
@@ -244,9 +244,9 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
             debugger;
             var featureRect = feature.append("rect")
                                 .style("fill", coFeatures[f].color)
-                                .style("opacity", 0.8)
+                                .style("opacity", 0.5)
                                 .attr("x", xShift)
-                                .attr("y", yPos + seqWidth + coStep * (f+1))
+                                .attr("y", yPos + (seqWidth- 6 + coStep) * (f+1))
                                 .attr("width", rectWidth )
                                 .attr("height", fWidth - 6);
             //feature label background                 
@@ -255,13 +255,13 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 .style("fill", "white")
                                 .style("opacity", 1)
                                 .attr("x", xShift + rectWidth / 2 - (coFeatures[f].name.split('').length + 10 ) * 7/2 )
-                                .attr("y", yPos + seqWidth + coStep * (f+1))
+                                .attr("y", yPos + (seqWidth - 6 + coStep) * (f + 1))
                                 .attr("width", (coFeatures[f].name.split('').length + 10  ) * 7 )
                                 .attr("height", fWidth - 6);
             //feature label
             var featureLabel = feature.append("text")
                                 .attr("class", "noEvent")
-                                .attr("y", yPos + seqWidth + coStep * (f+1) + fWidth / 2)
+                                .attr("y", yPos + (seqWidth - 6 + coStep) * (f+1) + fWidth / 2)
                                 .attr("x", xShift + rectWidth / 2)
                                 .style("text-anchor", "middle")
                                 .style("font-family", "monospace")
@@ -271,7 +271,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
         }
      }
      
-     var fNewWdith =  fWidth * coFeatures.length;
+     var fNewWdith =  (fWidth +coStep) * coFeatures.length;
 
     //  //get all the features located in the range or partially overlapped
     //  var poFeatures = $.grep(features, function (f, i) { 
