@@ -18,7 +18,7 @@ var features = [
 //name, start, end, color, clockwise, cut;
 
 //ntPerLine: the number of nt perline
-var ntPerLine = 230;
+var ntPerLine = 200;
 
 //generate complementary sequence
 var cSequence = genCSeq(sequence);
@@ -96,7 +96,7 @@ function formatSeq(sequence, symbol, ntPerLine){
 function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom) { 
     var margin = {top: 20, right: 20, bottom: 20, left: 20};
     width = +$(id).width() - margin.left - margin.right;
-    height = arrayLength * ( seqTop + enzymeWidth  + seqWidth + featureWdith + seqBottom + features.length) - margin.top - margin.bottom;
+    height = arrayLength * ( seqTop + enzymeWidth  + seqWidth + featureWdith + seqBottom + features.length*3) - margin.top - margin.bottom;
     //calculate the width
     var svg = d3.select(id)
                 .append("svg")
@@ -114,9 +114,9 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      var yPos = 5;
     var xShift = 25 // for adding count and vertical line
     var count = 1;
-    //define 10nt width
-    var nt10 = 70.16;
-    var sp = 8.50;
+    //define 10nt width 70.16, sp = 8.50
+    var nt10 = 78.015625;
+    var sp = 23.40625 - (78.015625/10)*2;
     svgSeq = svg.append("g").attr("id", "seqSVG");
     for(i=0; i< seqArray.length; i++){
         //forward sequence
@@ -231,7 +231,8 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      var fWidth = 20;
 
      //calculate the feature rect width
-     $('body').append('<div id="measure-text-width" class="nt-text-width">ATGCATGCGC</div>');
+     $('body').append('<div id="measure-text-width" class="nt-text-width">A G</div>');
+     console.log($("#measure-text-width").width());
      var rectWidth = $("#measure-text-width").text(seqArray[0]).width();
      $("#measure-text-width").remove();
 
@@ -381,8 +382,9 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 })
                                 .attr("y", yPos+ prefNewWdith + (seqWidth - 6 + coStep) * (l + 1))
                                 .attr("width", function(){
+                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
                                     var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
-                                    return calRectWidth(rectWidth, ntPerLine, fEnd);
+                                    return calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
                                 .attr("height", fWidth - 6);
                 
