@@ -236,18 +236,17 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      $("#measure-text-width").remove();
 
      var coStep = 10; //vertical space between each feature
-
+     var fNewWdith =0;
      if(coFeatures.length >=1){
      var feature = svgSeq.append("g");
         for(f = 0; f < coFeatures.length; f++){
             //feature rect
-            debugger;
             var featureRect = feature.append("rect")
                                 .style("fill", coFeatures[f].color)
                                 .style("opacity", 0.5)
                                 .attr("x", xShift)
                                 .attr("y", yPos + (seqWidth- 6 + coStep) * (f+1))
-                                .attr("width", rectWidth )
+                                .attr("width", rectWidth)
                                 .attr("height", fWidth - 6);
             //feature label background                 
             var featureBg = feature.append("rect")
@@ -268,18 +267,133 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 .style("font-size", "10px")
                                 .style("fill", function () { return coFeatures[f].color; })
                                 .text(function(){return (coFeatures[f].clockwise===0? ">>>> " : "<<<< ") + coFeatures[f].name  + (coFeatures[f].clockwise===0? " >>>>" : " <<<<"); });
+        //add up the width
+        fNewWdith =  fNewWdith + (fWidth +coStep);
         }
      }
      
-     var fNewWdith =  (fWidth +coStep) * coFeatures.length;
 
-    //  //get all the features located in the range or partially overlapped
-    //  var poFeatures = $.grep(features, function (f, i) { 
-    //     return ((f.start > seqStart && f.end < seqEnd) ||(f.start < seqStart && f.end < seqEnd) || (f.start > seqStart && f.end > seqEnd));
-    //  })
-    //  if(poFeatures.length >0){
-    //      //draw the features based on the start, need to deal with the overlapping features
-    //  }
+
+
+     var prefNewWdith = fNewWdith;
+     //get all the features located in the range or partially overlapped
+     //1: features do not start in the range, but end in the range
+     //2: features start in the range but not end in the range
+     //3: features start and also end in the range
+    var poFeatures = $.grep(features, function (f, i) { 
+            return ((f.start < seqStart && f.end > seqStart && f.end < seqEnd)|| (f.start > seqStart && f.start < seqEnd && f.end > seqEnd) || (f.start > seqStart && f.end < seqEnd) );
+    })
+    //sort array by start
+    poFeatures.sort(sortByProperty('start'));
+    // //line# of features
+    var line = 0;
+    var fLine =[];
+    var total = poFeatures.length;
+    for(a=0; a< total; a++){
+        fLine.push([]);
+    }
+    if(total > 0){
+        if(poFeatures.length === 1 ){
+            fLine[0].push(poFeatures[0]);
+        }
+        else{
+            //>1
+            var rFeature = poFeatures[poFeatures.length - 1];
+            fLine[line].push(rFeature);
+            poFeatures.pop();
+
+            while(true){                
+                if(poFeatures.length ===0){
+                    break;
+                }
+
+                poFeatures.sort(sortByProperty('start'));
+                var tempArray = [];
+
+                if(poFeatures.length ===1){
+                    if(line==0){
+                        if(poFeatures[0].end <= rFeature.start){
+                            fLine[0].push(poFeatures[0]);
+                            poFeatures.pop();
+                        }
+                        else{
+                            fLine[1].push(poFeatures[0]);
+                            poFeatures.pop();
+                        }
+                    }
+                    else{
+                        if(poFeatures[0].end <= rFeature.start){
+                            fLine[line].push(poFeatures[0]);
+                        }
+                        else{
+                            fLine[line+1].push(poFeatures[0]);
+                        }                        
+                        poFeatures.pop();
+                    }                    
+                }
+
+                if(poFeatures.length ===0){
+                    break;
+                }
+
+                var z = poFeatures.length;
+                while(z--){                    
+                    var lFeature = poFeatures[z]; 
+                    if(lFeature.end <= rFeature.start){
+                        fLine[line].push(lFeature);
+                        rFeature = lFeature;
+                        poFeatures.pop();
+                    }
+                    else{
+                        tempArray.push(lFeature);
+                        rFeature = lFeature;
+                        poFeatures.pop();
+                    }                
+                }   
+                
+                if(tempArray.length == 0){
+                    break;
+                }else{
+                    line++;
+                    poFeatures = tempArray;
+                    poFeatures.sort(sortByProperty('start'));               
+                    rFeature = poFeatures[poFeatures.length - 1];
+                    fLine[line].push(rFeature);
+                    poFeatures.pop();
+                }
+            }
+        }
+    }
+     //loop through the fLine array
+     for(l=0; l < fLine.length; l++){
+         if(fLine[l].length >0){
+             fNewWdith =  fNewWdith + (fWidth + coStep);
+             var feature = svgSeq.append("g");
+             for(k=0; k < fLine[l].length; k++){
+                 //feature rect
+                 console.log(fLine[l]);
+                var featureRect = feature.append("rect")
+                                .style("fill", fLine[l][k].color)
+                                .style("opacity", 0.5)
+                                .attr("x", function(){
+                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+                                    return xShift + calRectWidth(rectWidth, ntPerLine, fStart);
+                                })
+                                .attr("y", yPos+ prefNewWdith + (seqWidth - 6 + coStep) * (k + 1))
+                                .attr("width", function(){
+                                    var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
+                                    return calRectWidth(rectWidth, ntPerLine, fEnd);
+                                })
+                                .attr("height", fWidth - 6);
+                
+             }         
+         }
+     }
+     $.each(fLine, function(i, d){
+         var temp = d.length;
+
+     })
+
 
      featureHeight = fNewWdith === 0 ? featureWdith : fNewWdith;
     //cal the y pos based on enzymes
@@ -301,3 +415,21 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
   }
 
 
+function sortByProperty(property) {
+    'use strict';
+    return function (a, b) {
+        var sortStatus = 0;
+        if (a[property] < b[property]) {
+            sortStatus = -1;
+        } else if (a[property] > b[property]) {
+            sortStatus = 1;
+        }
+        return sortStatus;
+    };
+}
+
+
+//cal the rectWidth
+function calRectWidth(totalWidth, ntPerLine, ntPos){
+    return (ntPos + Math.round(ntPos / 10 ))/(ntPerLine + + Math.round(ntPerLine / 10)) * totalWidth;
+}
