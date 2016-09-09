@@ -379,7 +379,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                     var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
                                     return xShift + calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
-                                .attr("y", yPos+ prefNewWdith + (seqWidth - 6 + coStep) * (k + 1))
+                                .attr("y", yPos+ prefNewWdith + (seqWidth - 6 + coStep) * (l + 1))
                                 .attr("width", function(){
                                     var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
                                     return calRectWidth(rectWidth, ntPerLine, fEnd);
