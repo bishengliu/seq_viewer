@@ -51,6 +51,15 @@ var svg = drawSVG("#displaySeq", arrayLength, seqTop, enzymeWidth, seqWidth, fea
 //draw forward seq and complementary sequence
 var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features);
 
+//redraw the svg when changing the page size
+$(window).resize(function (){
+    $("#displaySeq").empty();
+    //draw svg
+    var svg = drawSVG("#displaySeq", arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom);
+
+    //draw forward seq and complementary sequence
+    var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features);
+});
 
 //functions
 //render google color
@@ -105,12 +114,11 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                     .append("g")
                         .attr("transform", "translate(" + margin.left +"," + margin.top + ")");
     return svg;
- }
+}
 
 
-
- //draw sequence
- function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features) { 
+ //draw sequence and features
+function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features) { 
      var yPos = 5;
     var xShift = 25 // for adding count and vertical line
     var count = 1;
@@ -553,6 +561,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
 
     return svgSeq;
   }
+
 
 
 function sortByProperty(property) {
