@@ -122,6 +122,8 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
     var nt10 = 70.16;
     var sp = 8.50;
 
+    //the with of the middle line between seq
+    var middleWidth = 6;
     svgSeq = svg.append("g").attr("id", "seqSVG");
     for(i=0; i< seqArray.length; i++){
         //forward sequence
@@ -154,9 +156,9 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 .style("stroke", "#c7c7c7")
                                 .style("stroke-width", 0.5)
                                 .attr("x1", xShift + nt10/17 + c * (nt10 + sp))
-                                .attr("y1", yPos + 6) 
+                                .attr("y1", yPos + middleWidth) 
                                 .attr("x2", xShift + nt10 - nt10/20 + c * (nt10 + sp)) 
-                                .attr("y2", yPos + 6);
+                                .attr("y2", yPos + middleWidth);
             //draw small vertical lines
             for(v=0; v < 10; v++){
                 var vline = fcSeq.append("g").append("line")
@@ -175,9 +177,9 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 .style("stroke", "#c7c7c7")
                                 .style("stroke-width", 0.5)
                                 .attr("x1", xShift + nt10/17 + c * (nt10 + sp))
-                                .attr("y1", yPos + 6) 
+                                .attr("y1", yPos + middleWidth) 
                                 .attr("x2", xShift + nt10 - nt10/20 + c * (nt10 + sp)) 
-                                .attr("y2", yPos + 6);
+                                .attr("y2", yPos + middleWidth);
                 //draw small vertical lines
                 for(v=0; v < 10; v++){
                     var vline = fcSeq.append("g").append("line")
@@ -195,9 +197,9 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 .style("stroke", "#c7c7c7")
                                 .style("stroke-width", 0.5)
                                 .attr("x1", xShift + nt10/17 + Math.trunc(seqArrayItem.length / 10) * (nt10 + sp))
-                                .attr("y1", yPos + 6) 
+                                .attr("y1", yPos + middleWidth) 
                                 .attr("x2", xShift + nt10 * (ntLeft / 10 ) - nt10/20 + Math.trunc(seqArrayItem.length / 10)  * (nt10 + sp)) 
-                                .attr("y2", yPos + 6);
+                                .attr("y2", yPos + middleWidth);
                                 //draw small vertical lines
                 for(v=0; v < ntLeft; v++){
                     var vline = fcSeq.append("g").append("line")
@@ -237,7 +239,6 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
 
      //calculate the feature rect width
      $('body').append('<div id="measure-text-width" class="nt-text-width">A G</div>');
-     console.log($("#measure-text-width").width());
      var rectWidth = $("#measure-text-width").text(seqArray[0]).width();
      $("#measure-text-width").remove();
 
@@ -248,6 +249,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
         for(f = 0; f < coFeatures.length; f++){
             //feature line
              var featureRect = feature.append("line")
+                                .data([coFeatures[f]]) //pass the data for mouse on events
                                 .attr("class", function(){ return formatName(coFeatures[f].name, "line"); })
                                 .style("stroke", coFeatures[f].color)
                                 .style("stroke-opacity", 0.6)
@@ -255,15 +257,65 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 .attr("y1", yPos + (seqWidth - 3 + coStep) * (f+1))
                                 .attr("x2", xShift + rectWidth)
                                 .attr("y2", yPos + (seqWidth - 3 + coStep) * (f+1));
-            //hidden rect
+                                //add mous eevents
+                                featureRect.on("mouseover", function(d){
+                                    //get the class
+                                    var lineClass = '.'+ formatName(d.name, "line");
+                                    var rectClass = '.'+formatName(d.name, "rect");
+                                    var seqClass = '.' + formatName(d.name, "seq");
+                                    d3.selectAll(lineClass).style("stroke-opacity", 1)
+                                    d3.selectAll(rectClass).style("opacity", 0.5);
+                                    d3.selectAll(seqClass).style("opacity", 0.1);
+                                })
+                                .on("mouseout", function(d){
+                                    //get the class
+                                    var lineClass = '.'+ formatName(d.name, "line");
+                                    var rectClass = '.'+formatName(d.name, "rect");
+                                    var seqClass = '.' + formatName(d.name, "seq");
+                                    d3.selectAll(lineClass).style("stroke-opacity", 0.6)
+                                    d3.selectAll(rectClass).style("opacity", 0.1);
+                                    d3.selectAll(seqClass).style("opacity", 0.0);
+                                });
+            //hidden rect the span the seq
+            var seqRect = svgSeq.append("rect")
+                                .data([coFeatures[f]]) //pass the data for mouse on events
+                                .attr("class", function(){ return formatName(coFeatures[f].name, "seq"); })
+                                .style("fill", coFeatures[f].color)
+                                .style("opacity", 0.0)
+                                .attr("x", xShift)
+                                .attr("y", yPos - seqWidth)
+                                .attr("width", rectWidth)
+                                .attr("height", 2*seqWidth+middleWidth);
+            
+            //label rect
             var featureBg = feature.append("rect")
+                                .data([coFeatures[f]]) //pass the data for mouse on events
+                                .attr("class", function(){ return formatName(coFeatures[f].name, "rect"); })
                                 .style("fill", coFeatures[f].color)
                                 .style("opacity", 0.1)
                                 .attr("x", xShift + rectWidth / 2 - (coFeatures[f].name.split('').length + 10 ) * 7/2 )
                                 .attr("y", yPos + (seqWidth - 3 + coStep) * (f + 1))
                                 .attr("width", (coFeatures[f].name.split('').length + 10  ) * 7)
                                 .attr("height", 1.2*yShift);
-
+                                //add mous eevents
+                                featureBg.on("mouseover", function(d){
+                                    //get the class
+                                    var lineClass = '.'+ formatName(d.name, "line");
+                                    var rectClass = '.'+formatName(d.name, "rect");
+                                    var seqClass = '.'  +formatName(d.name, "seq");
+                                    d3.selectAll(lineClass).style("stroke-opacity", 1)
+                                    d3.selectAll(rectClass).style("opacity", 0.5);
+                                    d3.selectAll(seqClass).style("opacity", 0.1);
+                                })
+                                .on("mouseout", function(d){
+                                    //get the class
+                                    var lineClass = '.'+ formatName(d.name, "line");
+                                    var rectClass = '.'+formatName(d.name, "rect");
+                                    var seqClass = '.' +formatName(d.name, "seq");
+                                    d3.selectAll(lineClass).style("stroke-opacity", 0.6)
+                                    d3.selectAll(rectClass).style("opacity", 0.1);
+                                    d3.selectAll(seqClass).style("opacity", 0.0);
+                                });
             //label
             var featureLabel = feature.append("text")
                                 .attr("class", "noEvent")
@@ -376,6 +428,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
              for(k=0; k < fLine[l].length; k++){
                  //feature line
             var featureRect = feature.append("line")
+                                .data([fLine[l][k]]) //pass the data for mouse on events
                                 .attr("class", function(){ return formatName(fLine[l][k].name, "line"); })
                                 .style("stroke", fLine[l][k].color)
                                 .style("stroke-opacity", 0.6)
@@ -389,6 +442,79 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                     return xShift +calRectWidth(rectWidth, ntPerLine, fEnd);
                                 })
                                 .attr("y2", yPos + prefNewWdith + (seqWidth - 3 + coStep) * (l + 1));
+                                //add mous eevents
+                                featureRect.on("mouseover", function(d){
+                                    //get the class
+                                    var lineClass = '.'+ formatName(d.name, "line");
+                                    var rectClass = '.'+formatName(d.name, "rect");
+                                    var seqClass = '.' + formatName(d.name, "seq");
+                                    d3.selectAll(lineClass).style("stroke-opacity", 1)
+                                    d3.selectAll(rectClass).style("opacity", 0.5);
+                                    d3.selectAll(seqClass).style("opacity", 0.1);
+                                })
+                                .on("mouseout", function(d){
+                                    //get the class
+                                    var lineClass = '.'+ formatName(d.name, "line");
+                                    var rectClass = '.'+formatName(d.name, "rect");
+                                    var seqClass = '.' + formatName(d.name, "seq");
+                                    d3.selectAll(lineClass).style("stroke-opacity", 0.6)
+                                    d3.selectAll(rectClass).style("opacity", 0.1);
+                                    d3.selectAll(seqClass).style("opacity", 0.0);
+                                });
+            //hidden rect the span the seq
+            var seqRect = svgSeq.append("rect")
+                                .data([fLine[l][k]]) //pass the data for mouse on events
+                                .attr("class", function(){ return formatName(fLine[l][k].name, "seq"); })
+                                .style("fill", fLine[l][k].color)
+                                .style("opacity", 0.0)
+
+                                .attr("x", function(){
+                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+                                    return xShift + calRectWidth(rectWidth, ntPerLine, fStart);
+                                })
+                                .attr("y", yPos - seqWidth)
+                                .attr("width", function(){
+                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+                                    var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
+                                    return calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart);
+                                })
+                                .attr("height", 2*seqWidth+middleWidth);
+
+            //label rect
+            var featureBg = feature.append("rect")
+                                .data([fLine[l][k]]) //pass the data for mouse on events
+                                .attr("class", function(){ return formatName(fLine[l][k].name, "rect"); })
+                                .style("fill", fLine[l][k].color)
+                                .style("opacity", 0.1)
+                                .attr("x", function(){
+                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+                                    var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
+                                    return xShift+ (calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart))/2 + calRectWidth(rectWidth, ntPerLine, fStart) - (fLine[l][k].name.split('').length + 10 ) * 7/2;
+                                })
+                                .attr("y", yPos + prefNewWdith + (seqWidth - 3 + coStep) * (l+1))
+                                .attr("width", (fLine[l][k].name.split('').length + 10  ) * 7)
+                                .attr("height", 1.2*yShift);
+
+                                //add mous eevents
+                                featureBg.on("mouseover", function(d){
+                                    //get the class
+                                    var lineClass = '.'+ formatName(d.name, "line");
+                                    var rectClass = '.'+formatName(d.name, "rect");
+                                    var seqClass = '.' + formatName(d.name, "seq");
+                                    d3.selectAll(lineClass).style("stroke-opacity", 1)
+                                    d3.selectAll(rectClass).style("opacity", 0.5);
+                                    d3.selectAll(seqClass).style("opacity", 0.1);
+                                })
+                                .on("mouseout", function(d){
+                                    //get the class
+                                    var lineClass = '.'+ formatName(d.name, "line");
+                                    var rectClass = '.'+formatName(d.name, "rect");
+                                    var seqClass = '.' + formatName(d.name, "seq");
+                                    d3.selectAll(lineClass).style("stroke-opacity", 0.6)
+                                    d3.selectAll(rectClass).style("opacity", 0.1);
+                                    d3.selectAll(seqClass).style("opacity", 0.0);
+                                });
+
             //feature label
             var featureLabel = feature.append("text")
                                 .attr("class", "noEvent")
@@ -445,7 +571,7 @@ function sortByProperty(property) {
 
 //cal the rectWidth
 function calRectWidth(totalWidth, ntPerLine, ntPos){
-    return (ntPos + Math.round(ntPos / 10 ))/(ntPerLine + + Math.round(ntPerLine / 10)) * totalWidth;
+    return (ntPos + Math.round(ntPos / 10 ))/(ntPerLine + Math.round(ntPerLine / 10)) * totalWidth;
 }
 
 //format feature for class
@@ -453,8 +579,15 @@ function formatName(name, type){
     var nameArray = name.split('');
     var finalArray = [];
     $.each(nameArray, function(i, d){
-        if(d !="'" || d !='"' || d != ' '){
-            finalArray.push(d);
+        if(i==0){
+            if((/[a-zA-Z]/.test(d))){
+                finalArray.push(d);
+            }
+        }
+        else{
+            if((/[a-zA-Z0-9]/.test(d))){
+                finalArray.push(d);
+            }
         }
     })
     return finalArray.join('')+"-"+type;
