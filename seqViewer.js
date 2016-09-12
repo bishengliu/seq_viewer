@@ -18,7 +18,7 @@ var features = [
 //name, start, end, color, clockwise, cut;
 
 //ntPerLine: the number of nt perline
-var ntPerLine = 200;
+var ntPerLine = 230;
 
 //generate complementary sequence
 var cSequence = genCSeq(sequence);
@@ -114,9 +114,14 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      var yPos = 5;
     var xShift = 25 // for adding count and vertical line
     var count = 1;
+    var yShift = 5;
     //define 10nt width 70.16, sp = 8.50
-    var nt10 = 78.015625;
-    var sp = 23.40625 - (78.015625/10)*2;
+    // var nt10 = 78.015625;
+    // var sp = 23.40625 - (78.015625/10)*2;
+
+    var nt10 = 70.16;
+    var sp = 8.50;
+
     svgSeq = svg.append("g").attr("id", "seqSVG");
     for(i=0; i< seqArray.length; i++){
         //forward sequence
@@ -228,7 +233,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
         return f.start <= seqStart && f.end >= seqEnd;
      })
      //draw coFeatures
-     var fWidth = 20;
+     var fWidth = 8;
 
      //calculate the feature rect width
      $('body').append('<div id="measure-text-width" class="nt-text-width">A G</div>');
@@ -236,7 +241,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      var rectWidth = $("#measure-text-width").text(seqArray[0]).width();
      $("#measure-text-width").remove();
 
-     var coStep = 10; //vertical space between each feature
+     var coStep = 8; //vertical space between each feature
      var fNewWdith =0;
      if(coFeatures.length >=1){
      var feature = svgSeq.append("g");
@@ -249,19 +254,19 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 .attr("y", yPos + (seqWidth- 6 + coStep) * (f+1))
                                 .attr("width", rectWidth)
                                 .attr("height", fWidth - 6);
-            //feature label background                 
-            var featureBg = feature.append("rect")
-                                .attr("class", "noEvent")
-                                .style("fill", "white")
-                                .style("opacity", 1)
-                                .attr("x", xShift + rectWidth / 2 - (coFeatures[f].name.split('').length + 10 ) * 7/2 )
-                                .attr("y", yPos + (seqWidth - 6 + coStep) * (f + 1))
-                                .attr("width", (coFeatures[f].name.split('').length + 10  ) * 7 )
-                                .attr("height", fWidth - 6);
+            // //feature label background                 
+            // var featureBg = feature.append("rect")
+            //                     .attr("class", "noEvent")
+            //                     .style("fill", "white")
+            //                     .style("opacity", 1)
+            //                     .attr("x", xShift + rectWidth / 2 - (coFeatures[f].name.split('').length + 10 ) * 7/2 )
+            //                     .attr("y", yPos + (seqWidth - 6 + coStep) * (f + 1) + yShift)
+            //                     .attr("width", (coFeatures[f].name.split('').length + 10  ) * 7)
+            //                     .attr("height", fWidth - 6);
             //feature label
             var featureLabel = feature.append("text")
                                 .attr("class", "noEvent")
-                                .attr("y", yPos + (seqWidth - 6 + coStep) * (f+1) + fWidth / 2)
+                                .attr("y", yPos + (seqWidth - 6 + coStep) * (f+1) + fWidth / 2 + yShift)
                                 .attr("x", xShift + rectWidth / 2)
                                 .style("text-anchor", "middle")
                                 .style("font-family", "monospace")
@@ -273,9 +278,6 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
         }
      }
      
-
-
-
      var prefNewWdith = fNewWdith;
      //get all the features located in the range or partially overlapped
      //1: features do not start in the range, but end in the range
@@ -372,7 +374,6 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
              var feature = svgSeq.append("g");
              for(k=0; k < fLine[l].length; k++){
                  //feature rect
-                 console.log(fLine[l]);
                 var featureRect = feature.append("rect")
                                 .style("fill", fLine[l][k].color)
                                 .style("opacity", 0.5)
@@ -380,22 +381,46 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                     var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
                                     return xShift + calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
-                                .attr("y", yPos+ prefNewWdith + (seqWidth - 6 + coStep) * (l + 1))
+                                .attr("y", yPos + prefNewWdith + (seqWidth - 6 + coStep) * (l + 1))
                                 .attr("width", function(){
                                     var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
                                     var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
                                     return calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
                                 .attr("height", fWidth - 6);
-                
+            
+            // //feature label background                 
+            // var featureBg = feature.append("rect")
+            //                     .attr("class", "noEvent")
+            //                     .style("fill", "white")
+            //                     .style("opacity", 1)
+            //                     .attr("x", function(){
+            //                         var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+            //                         var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
+            //                         return xShift+ (calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart))/2 + calRectWidth(rectWidth, ntPerLine, fStart) - (fLine[l][k].name.split('').length + 10 ) * 7/2; })
+            //                     .attr("y", yPos + prefNewWdith + (seqWidth - 6 + coStep) * (l+1) + yShift)
+            //                     .attr("width", (fLine[l][k].name.split('').length + 10  ) * 7 )
+            //                     .attr("height", fWidth-6);
+
+            //feature label
+            var featureLabel = feature.append("text")
+                                .attr("class", "noEvent")
+                                .attr("y", yPos + prefNewWdith + (seqWidth - 6 + coStep) * (l+1) + fWidth / 2 + yShift)
+                                .attr("x", function(){
+                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+                                    var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
+                                    return xShift+ (calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart))/2 + calRectWidth(rectWidth, ntPerLine, fStart);
+                                })
+                                .style("text-anchor", "middle")
+                                .style("font-family", "monospace")
+                                .style("font-size", "10px")
+                                .style("fill", function () { return fLine[l][k].color; })
+                                .text(function(){return (fLine[l][k].clockwise===0? ">>>> " : "<<<< ") + fLine[l][k].name  + (fLine[l][k].clockwise===0? " >>>>" : " <<<<"); });
+
+
              }         
          }
      }
-     $.each(fLine, function(i, d){
-         var temp = d.length;
-
-     })
-
 
      featureHeight = fNewWdith === 0 ? featureWdith : fNewWdith;
     //cal the y pos based on enzymes
