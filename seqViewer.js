@@ -248,12 +248,23 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
         for(f = 0; f < coFeatures.length; f++){
             //feature line
              var featureRect = feature.append("line")
+                                .attr("class", function(){ return formatName(coFeatures[f].name, "line"); })
                                 .style("stroke", coFeatures[f].color)
                                 .style("stroke-opacity", 0.6)
                                 .attr("x1", xShift)
                                 .attr("y1", yPos + (seqWidth - 3 + coStep) * (f+1))
                                 .attr("x2", xShift + rectWidth)
-                                .attr("y2", yPos + (seqWidth - 3 + coStep) * (f+1));                
+                                .attr("y2", yPos + (seqWidth - 3 + coStep) * (f+1));
+            //hidden rect
+            var featureBg = feature.append("rect")
+                                .style("fill", coFeatures[f].color)
+                                .style("opacity", 0.1)
+                                .attr("x", xShift + rectWidth / 2 - (coFeatures[f].name.split('').length + 10 ) * 7/2 )
+                                .attr("y", yPos + (seqWidth - 3 + coStep) * (f + 1))
+                                .attr("width", (coFeatures[f].name.split('').length + 10  ) * 7)
+                                .attr("height", 1.2*yShift);
+
+            //label
             var featureLabel = feature.append("text")
                                 .attr("class", "noEvent")
                                 .attr("y", yPos + (seqWidth - 3 + coStep) * (f+1) + yShift)
@@ -365,6 +376,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
              for(k=0; k < fLine[l].length; k++){
                  //feature line
             var featureRect = feature.append("line")
+                                .attr("class", function(){ return formatName(fLine[l][k].name, "line"); })
                                 .style("stroke", fLine[l][k].color)
                                 .style("stroke-opacity", 0.6)
                                 .attr("x1", function(){
@@ -434,4 +446,16 @@ function sortByProperty(property) {
 //cal the rectWidth
 function calRectWidth(totalWidth, ntPerLine, ntPos){
     return (ntPos + Math.round(ntPos / 10 ))/(ntPerLine + + Math.round(ntPerLine / 10)) * totalWidth;
+}
+
+//format feature for class
+function formatName(name, type){
+    var nameArray = name.split('');
+    var finalArray = [];
+    $.each(nameArray, function(i, d){
+        if(d !="'" || d !='"' || d != ' '){
+            finalArray.push(d);
+        }
+    })
+    return finalArray.join('')+"-"+type;
 }
