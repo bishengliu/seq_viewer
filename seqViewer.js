@@ -114,7 +114,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      var yPos = 5;
     var xShift = 25 // for adding count and vertical line
     var count = 1;
-    var yShift = 5;
+    var yShift = 10;
     //define 10nt width 70.16, sp = 8.50
     // var nt10 = 78.015625;
     // var sp = 23.40625 - (78.015625/10)*2;
@@ -241,32 +241,22 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      var rectWidth = $("#measure-text-width").text(seqArray[0]).width();
      $("#measure-text-width").remove();
 
-     var coStep = 8; //vertical space between each feature
+     var coStep = 10; //vertical space between each feature
      var fNewWdith =0;
      if(coFeatures.length >=1){
      var feature = svgSeq.append("g");
         for(f = 0; f < coFeatures.length; f++){
-            //feature rect
-            var featureRect = feature.append("rect")
-                                .style("fill", coFeatures[f].color)
-                                .style("opacity", 0.5)
-                                .attr("x", xShift)
-                                .attr("y", yPos + (seqWidth- 6 + coStep) * (f+1))
-                                .attr("width", rectWidth)
-                                .attr("height", fWidth - 6);
-            // //feature label background                 
-            // var featureBg = feature.append("rect")
-            //                     .attr("class", "noEvent")
-            //                     .style("fill", "white")
-            //                     .style("opacity", 1)
-            //                     .attr("x", xShift + rectWidth / 2 - (coFeatures[f].name.split('').length + 10 ) * 7/2 )
-            //                     .attr("y", yPos + (seqWidth - 6 + coStep) * (f + 1) + yShift)
-            //                     .attr("width", (coFeatures[f].name.split('').length + 10  ) * 7)
-            //                     .attr("height", fWidth - 6);
-            //feature label
+            //feature line
+             var featureRect = feature.append("line")
+                                .style("stroke", coFeatures[f].color)
+                                .style("stroke-opacity", 0.6)
+                                .attr("x1", xShift)
+                                .attr("y1", yPos + (seqWidth - 3 + coStep) * (f+1))
+                                .attr("x2", xShift + rectWidth)
+                                .attr("y2", yPos + (seqWidth - 3 + coStep) * (f+1));                
             var featureLabel = feature.append("text")
                                 .attr("class", "noEvent")
-                                .attr("y", yPos + (seqWidth - 6 + coStep) * (f+1) + fWidth / 2 + yShift)
+                                .attr("y", yPos + (seqWidth - 3 + coStep) * (f+1) + yShift)
                                 .attr("x", xShift + rectWidth / 2)
                                 .style("text-anchor", "middle")
                                 .style("font-family", "monospace")
@@ -274,7 +264,7 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
                                 .style("fill", function () { return coFeatures[f].color; })
                                 .text(function(){return (coFeatures[f].clockwise===0? ">>>> " : "<<<< ") + coFeatures[f].name  + (coFeatures[f].clockwise===0? " >>>>" : " <<<<"); });
         //add up the width
-        fNewWdith =  fNewWdith + (fWidth +coStep);
+        fNewWdith =  fNewWdith + (seqWidth - 3 + coStep);
         }
      }
      
@@ -370,42 +360,27 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
      //loop through the fLine array
      for(l=0; l < fLine.length; l++){
          if(fLine[l].length >0){
-             fNewWdith =  fNewWdith + (fWidth + coStep);
+             fNewWdith =  fNewWdith + (seqWidth - 3  + coStep);
              var feature = svgSeq.append("g");
              for(k=0; k < fLine[l].length; k++){
-                 //feature rect
-                var featureRect = feature.append("rect")
-                                .style("fill", fLine[l][k].color)
-                                .style("opacity", 0.5)
-                                .attr("x", function(){
+                 //feature line
+            var featureRect = feature.append("line")
+                                .style("stroke", fLine[l][k].color)
+                                .style("stroke-opacity", 0.6)
+                                .attr("x1", function(){
                                     var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
                                     return xShift + calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
-                                .attr("y", yPos + prefNewWdith + (seqWidth - 6 + coStep) * (l + 1))
-                                .attr("width", function(){
-                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+                                .attr("y1", yPos + prefNewWdith + (seqWidth - 3 + coStep) * (l + 1))
+                                .attr("x2", function(){
                                     var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
-                                    return calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart);
+                                    return xShift +calRectWidth(rectWidth, ntPerLine, fEnd);
                                 })
-                                .attr("height", fWidth - 6);
-            
-            // //feature label background                 
-            // var featureBg = feature.append("rect")
-            //                     .attr("class", "noEvent")
-            //                     .style("fill", "white")
-            //                     .style("opacity", 1)
-            //                     .attr("x", function(){
-            //                         var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
-            //                         var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
-            //                         return xShift+ (calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart))/2 + calRectWidth(rectWidth, ntPerLine, fStart) - (fLine[l][k].name.split('').length + 10 ) * 7/2; })
-            //                     .attr("y", yPos + prefNewWdith + (seqWidth - 6 + coStep) * (l+1) + yShift)
-            //                     .attr("width", (fLine[l][k].name.split('').length + 10  ) * 7 )
-            //                     .attr("height", fWidth-6);
-
+                                .attr("y2", yPos + prefNewWdith + (seqWidth - 3 + coStep) * (l + 1));
             //feature label
             var featureLabel = feature.append("text")
                                 .attr("class", "noEvent")
-                                .attr("y", yPos + prefNewWdith + (seqWidth - 6 + coStep) * (l+1) + fWidth / 2 + yShift)
+                                .attr("y", yPos + prefNewWdith + (seqWidth - 3 + coStep) * (l+1) + yShift)
                                 .attr("x", function(){
                                     var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
                                     var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
