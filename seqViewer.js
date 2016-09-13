@@ -15,11 +15,42 @@ var features = [
     {name: "LacZ_a", start: 6284, end: 6432, color: colores_google(10), clockwise: 0, cut:null},
     {name: "5'-LTR", start: 148, end: 974, color: colores_google(11), clockwise: 1, cut:null}
 ];
+
+
+var options = {
+                id: "#displaySeq", 
+                sequence: sequence, 
+                features: features
+            };
+
+window.SeqViewer = function(){
+    var id ="",
+        sequence = sequence,
+        features = features;
+
+    var SeqViewer = this;
+    
+    this.read = function(json){
+        id = json.id;
+        sequence = json.sequence,
+        features = json.features;
+    }
+
+    this.draw() = function(){
+        
+    }
+}
+
+
 //name, start, end, color, clockwise, cut;
 
+//get the window width
+var wWidth = $("#displaySeq").width() - 20 * 2; //padding on each side
+//define 10nt width 70.16, sp = 8.50
+var ntPerLine = Math.trunc((wWidth/(70.16+ 8.50))) * 10; //nt10 and sp 
 //ntPerLine: the number of nt perline
-var ntPerLine = 230;
-
+//var ntPerLine = 230;
+ntPerLine = ntPerLine < 5 ? 5: ntPerLine;
 //generate complementary sequence
 var cSequence = genCSeq(sequence);
 
@@ -54,6 +85,12 @@ var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop,
 //redraw the svg when changing the page size
 $(window).resize(function (){
     $("#displaySeq").empty();
+
+    //cal the width again
+    //get the window width
+    var wWidth = $(window).width() - 20*2; //padding on each side
+    //define 10nt width 70.16, sp = 8.50
+    var ntPerLine = Math.trunc((wWidth/(70.16+ 8.50))) * 10;
     //draw svg
     var svg = drawSVG("#displaySeq", arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom);
 
