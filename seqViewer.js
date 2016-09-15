@@ -1,6 +1,7 @@
 
 function seqViewer(){
     var id ="",
+        searchId = "",
         sequence = '',
         features = [];
     
@@ -21,7 +22,9 @@ function seqViewer(){
         //generate sequence array based on the ntPerLine
         var seqArray = []; //array for forward sequence
         var cSeqArray = []; //array for complementary sequence
+        var searchArray =[]; //array for search
 
+        var yPosArray =[];
         //use d3 to display seq in text and as well as the features
         //div id is displaySeq
         //draw canvas
@@ -40,6 +43,7 @@ function seqViewer(){
     
     this.read = function(json){
         id = json.id;
+        searchId = json.searchId,
         sequence = json.sequence,
         features = json.features;
 
@@ -54,22 +58,40 @@ function seqViewer(){
         cSequence = genCSeq(sequence);
         //generate sequence array based on the ntPerLine
         seqArray = formatSeq(sequence, symbol, ntPerLine); //array for forward sequence
+        searchArray = genSearchArray(seqArray);
         cSeqArray = formatSeq(cSequence, symbol, ntPerLine); //array for complementary sequence
 
         arrayLength = seqArray.length;
 
     }
 
-    this.draw = function(){        
+    this.draw = function(){
+        //search div
+        if($(searchId)){
+            addSearchDiv(searchId);
+        }
+        
+        (function(){
+            //remove all non letter in the seqeuce input
+            $('#search-seq').change(function () {
+                var before = $('#search-seq').val();
+                //strip out non-alpha characters and convert to uppercase
+                var after = before.replace(/[^a-zA-Z]+|\s+$|[0-9]+/g, '').toUpperCase();
+                after = after.replace(/[bdefhijklmnopqrsuvwxyzBDEFHIJKLMNOPQRSUVWZYX]+|\s+$|[0-9]+/g, '').toUpperCase();
+                $('#search-seq').val(after);
+            });
+        })();
+
         //draw svg
         var svg = drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom);
 
         //draw forward seq and complementary sequence
-        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features);
+        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray);
     }
 
     //redraw the seq viewer
     this.redraw = function(){
+
         $(id).empty();
         //cal the width again
         //get the window width
@@ -83,10 +105,9 @@ function seqViewer(){
         var svg = drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom);
 
         //draw forward seq and complementary sequence
-        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features);
+        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray);
     }
 }
-
 
 //functions
 //render google color
@@ -128,6 +149,27 @@ function formatSeq(sequence, symbol, ntPerLine){
      return outputArray;
 }
 
+//gensearch array
+function genSearchArray(seqArray){
+    var outputArray = [];
+    var index = 0;
+    $.each(seqArray, function(i, d){
+        var array = [];
+        dArray = d.split('');
+        $.each(dArray, function(si, sd){
+            if(sd != " "){
+            array.push(index.toString());
+            index++;
+            }
+            else{
+                array.push(" ");
+            }
+        })        
+        outputArray.push(array);
+    })
+    return outputArray;
+}
+
 //draw empty using d3
 function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom) { 
     var margin = {top: 20, right: 20, bottom: 20, left: 20};
@@ -145,8 +187,9 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
 
 
  //draw sequence and features
-function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features) { 
-     var yPos = 5;
+function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray) { 
+    var yPos = 5;
+    yPosArray.push(yPos);
     var xShift = 25 // for adding count and vertical line
     var count = 1;
     var yShift = 10;
@@ -159,107 +202,12 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
 
     //the with of the middle line between seq
     var middleWidth = 6;
+    svg.append("g").attr("id", "seq-Search");
     svgSeq = svg.append("g").attr("id", "seqSVG");
     for(i=0; i< seqArray.length; i++){
-        //forward sequence
-        var fcSeq = svgSeq.append("g");
-                    fcSeq.append("text")
-                        .attr("y", yPos)
-                        .attr("x", xShift)
-                        .style("text-anchor", "begin")
-                        .style("font-family", "monospace")
-                        .style("font-size", "13px")
-                        .style("fill", "#636363")
-                        .text(seqArray[i]);
-    //add nt count
-                    fcSeq.append("text")
-                        .attr("y", yPos)
-                        .attr("x", 0)
-                        .attr("class", "noEvent")
-                        .style("text-anchor", "middle")
-                        .style("font-family", "monospace")
-                        .style("font-size", "13px")
-                        .style("fill", "#636363")
-                        .text(count + "");
-    //show middle nt count
-    //first draw horizontal line
-    //remove the symbol in the seqArrayItem
-    var seqArrayItem = seqArray[i].split(symbol).join('');
-    if(seqArrayItem.length == ntPerLine){
-            for(c=0; c < Math.trunc(seqArrayItem.length / 10); c++){
-                var hline= fcSeq.append("g").append("line")
-                                .style("stroke", "#c7c7c7")
-                                .style("stroke-width", 0.5)
-                                .attr("x1", xShift + nt10/17 + c * (nt10 + sp))
-                                .attr("y1", yPos + middleWidth) 
-                                .attr("x2", xShift + nt10 - nt10/20 + c * (nt10 + sp)) 
-                                .attr("y2", yPos + middleWidth);
-            //draw small vertical lines
-            for(v=0; v < 10; v++){
-                var vline = fcSeq.append("g").append("line")
-                                .style("stroke-width", 0.5)
-                                .style("stroke", "#c7c7c7")
-                                .attr("x1", xShift + c * (nt10 + sp) + nt10/17 + v * nt10/10)
-                                .attr("y1", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 3) : (yPos + 4); }) 
-                                .attr("x2", xShift + c * (nt10 + sp)+ nt10/17 + v * nt10/10)
-                                .attr("y2", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 9) : (yPos + 8); });
-                        }
-            }
-    }
-    else{
-        for(c=0; c < Math.trunc(seqArrayItem.length / 10); c++){
-                var hline= fcSeq.append("g").append("line")
-                                .style("stroke", "#c7c7c7")
-                                .style("stroke-width", 0.5)
-                                .attr("x1", xShift + nt10/17 + c * (nt10 + sp))
-                                .attr("y1", yPos + middleWidth) 
-                                .attr("x2", xShift + nt10 - nt10/20 + c * (nt10 + sp)) 
-                                .attr("y2", yPos + middleWidth);
-                //draw small vertical lines
-                for(v=0; v < 10; v++){
-                    var vline = fcSeq.append("g").append("line")
-                                    .style("stroke-width", 0.5)
-                                    .style("stroke", "#c7c7c7")
-                                    .attr("x1", xShift + c * (nt10 + sp) + nt10/17 + v * nt10/10)
-                                    .attr("y1", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 3) : (yPos + 4); }) 
-                                    .attr("x2", xShift + c * (nt10 + sp)+ nt10/17 + v * nt10/10)
-                                    .attr("y2", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 9) : (yPos + 8); });
-                }
-            }
-        if(seqArrayItem.length % 10 !=0 ){
-            var ntLeft = seqArrayItem.length % 10;
-            var hline= fcSeq.append("g").append("line")
-                                .style("stroke", "#c7c7c7")
-                                .style("stroke-width", 0.5)
-                                .attr("x1", xShift + nt10/17 + Math.trunc(seqArrayItem.length / 10) * (nt10 + sp))
-                                .attr("y1", yPos + middleWidth) 
-                                .attr("x2", xShift + nt10 * (ntLeft / 10 ) - nt10/20 + Math.trunc(seqArrayItem.length / 10)  * (nt10 + sp)) 
-                                .attr("y2", yPos + middleWidth);
-                                //draw small vertical lines
-                for(v=0; v < ntLeft; v++){
-                    var vline = fcSeq.append("g").append("line")
-                                    .style("stroke-width", 0.5)
-                                    .style("stroke", "#c7c7c7")
-                                    .attr("x1", xShift + Math.trunc(seqArrayItem.length / 10) * (nt10 + sp) + nt10/17 + v * nt10/10)
-                                    .attr("y1", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 3) : (yPos + 4); }) 
-                                    .attr("x2", xShift + Math.trunc(seqArrayItem.length / 10) * (nt10 + sp)+ nt10/17 + v * nt10/10)
-                                    .attr("y2", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 9) : (yPos + 8); });
-                }
-        }
-    }
     
-    //complementary sequence
-    if(showComplementary){
-                    fcSeq.append("text")
-                        .attr("class", "noEvent")
-                        .attr("y", yPos + seqWidth)
-                        .attr("x", xShift)
-                        .style("text-anchor", "begin")
-                        .style("font-family", "monospace")
-                        .style("font-size", "13px")
-                        .style("fill", "#c7c7c7")
-                        .text(cSeqArray[i]);
-    }                 
+    ////////////////////////////////////////////////////////
+    //draw feature first
     //cal the y pos based on features
     //get current seq range
     var seqStart = ntPerLine * i + 1;
@@ -292,7 +240,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                                 .attr("y1", yPos + (seqWidth - 3 + coStep) * (f+1))
                                 .attr("x2", xShift + rectWidth)
                                 .attr("y2", yPos + (seqWidth - 3 + coStep) * (f+1));
-                                //add mous eevents
+                                //add mouse eevents
                                 featureRect.on("mouseover", function(d){
                                     //get the class
                                     var lineClass = '.'+ formatName(d.name, "line");
@@ -461,7 +409,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
              fNewWdith =  fNewWdith + (seqWidth - 3  + coStep);
              var feature = svgSeq.append("g");
              for(k=0; k < fLine[l].length; k++){
-                 //feature line
+            //feature line
             var featureRect = feature.append("line")
                                 .data([fLine[l][k]]) //pass the data for mouse on events
                                 .attr("class", function(){ return formatName(fLine[l][k].name, "line"); })
@@ -499,6 +447,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
             //hidden rect the span the seq
             var seqRect = svgSeq.append("rect")
                                 .data([fLine[l][k]]) //pass the data for mouse on events
+                                .attr("class", "featureRect")
                                 .attr("class", function(){ return formatName(fLine[l][k].name, "seq"); })
                                 .style("fill", fLine[l][k].color)
                                 .style("opacity", 0.0)
@@ -569,15 +518,151 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
              }         
          }
      }
+     ////////////////////////////////////////////////////
+     //need to implement to only draw the match index
+    //d3 search events
+    d3.select("#ok-search")
+      .on("click", function(){
+          //remove all the rect with class "searchRect";
+          var text = $("#search-seq").val();
+          if(text != null || text != ""){
+              //perform search and return the index
+              var indexArray = searchSeq(text, sequence);
+              if(indexArray.length >0){
+                    //draw rect for search
+                    var index=0;
+                    var searchRect = d3.select("#seq-Search").append("g");
+                    for(i=0; i< seqArray.length; i++){
+                        for(s=0; s < searchArray[i].length; s++){
+                            searchRect.append("rect")
+                                                    .attr("class", "searchRect")
+                                                    .attr("class", function(){ return searchArray[i][s] == ' '? "searchRect-space" : "searchRect-" + searchArray[i][s]; })
+                                                    .style("fill", "#e6e600")
+                                                    .style("opacity", 0.5)
+                                                    .attr("x", function(d){ return xShift + s * 7.15; })
+                                                    .attr("y", yPosArray[i] - seqWidth + 8)
+                                                    .attr("width", 7.15)
+                                                    .attr("height", seqWidth - 5);
+                        index++
+                        }
+                    }
+              }
+          }
+      })
+    /////////////////////////////////////////////////////
+    //draw the seq th elast to allow mouse selection of the seq
+    //forward sequence
+    var fcSeq = svgSeq.append("g");
+    //draw seq the last
+    fcSeq.append("text")
+                        .attr("y", yPos)
+                        .attr("x", xShift)
+                        .style("text-anchor", "begin")
+                        .style("font-family", "monospace")
+                        .style("font-size", "13px")
+                        .style("fill", "#636363")
+                        .text(seqArray[i]);
+    //add nt count
+                    fcSeq.append("text")
+                        .attr("y", yPos)
+                        .attr("x", 0)
+                        .attr("class", "noEvent")
+                        .style("text-anchor", "middle")
+                        .style("font-family", "monospace")
+                        .style("font-size", "13px")
+                        .style("fill", "#636363")
+                        .text(count + "");
+    //show middle nt count
+    //first draw horizontal line
+    //remove the symbol in the seqArrayItem
+    var seqArrayItem = seqArray[i].split(symbol).join('');
+    if(seqArrayItem.length == ntPerLine){
+            for(c=0; c < Math.trunc(seqArrayItem.length / 10); c++){
+                var hline= fcSeq.append("g").append("line")
+                                .style("stroke", "#c7c7c7")
+                                .style("stroke-width", 0.5)
+                                .attr("x1", xShift + nt10/17 + c * (nt10 + sp))
+                                .attr("y1", yPos + middleWidth) 
+                                .attr("x2", xShift + nt10 - nt10/20 + c * (nt10 + sp)) 
+                                .attr("y2", yPos + middleWidth);
+            //draw small vertical lines
+            for(v=0; v < 10; v++){
+                var vline = fcSeq.append("g").append("line")
+                                .style("stroke-width", 0.5)
+                                .style("stroke", "#c7c7c7")
+                                .attr("x1", xShift + c * (nt10 + sp) + nt10/17 + v * nt10/10)
+                                .attr("y1", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 3) : (yPos + 4); }) 
+                                .attr("x2", xShift + c * (nt10 + sp)+ nt10/17 + v * nt10/10)
+                                .attr("y2", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 9) : (yPos + 8); });
+                        }
+            }
+    }
+    else{
+        for(c=0; c < Math.trunc(seqArrayItem.length / 10); c++){
+                var hline= fcSeq.append("g").append("line")
+                                .style("stroke", "#c7c7c7")
+                                .style("stroke-width", 0.5)
+                                .attr("x1", xShift + nt10/17 + c * (nt10 + sp))
+                                .attr("y1", yPos + middleWidth) 
+                                .attr("x2", xShift + nt10 - nt10/20 + c * (nt10 + sp)) 
+                                .attr("y2", yPos + middleWidth);
+                //draw small vertical lines
+                for(v=0; v < 10; v++){
+                    var vline = fcSeq.append("g").append("line")
+                                    .style("stroke-width", 0.5)
+                                    .style("stroke", "#c7c7c7")
+                                    .attr("x1", xShift + c * (nt10 + sp) + nt10/17 + v * nt10/10)
+                                    .attr("y1", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 3) : (yPos + 4); }) 
+                                    .attr("x2", xShift + c * (nt10 + sp)+ nt10/17 + v * nt10/10)
+                                    .attr("y2", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 9) : (yPos + 8); });
+                }
+            }
+        if(seqArrayItem.length % 10 !=0 ){
+            var ntLeft = seqArrayItem.length % 10;
+            var hline= fcSeq.append("g").append("line")
+                                .style("stroke", "#c7c7c7")
+                                .style("stroke-width", 0.5)
+                                .attr("x1", xShift + nt10/17 + Math.trunc(seqArrayItem.length / 10) * (nt10 + sp))
+                                .attr("y1", yPos + middleWidth) 
+                                .attr("x2", xShift + nt10 * (ntLeft / 10 ) - nt10/20 + Math.trunc(seqArrayItem.length / 10)  * (nt10 + sp)) 
+                                .attr("y2", yPos + middleWidth);
+                                //draw small vertical lines
+                for(v=0; v < ntLeft; v++){
+                    var vline = fcSeq.append("g").append("line")
+                                    .style("stroke-width", 0.5)
+                                    .style("stroke", "#c7c7c7")
+                                    .attr("x1", xShift + Math.trunc(seqArrayItem.length / 10) * (nt10 + sp) + nt10/17 + v * nt10/10)
+                                    .attr("y1", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 3) : (yPos + 4); }) 
+                                    .attr("x2", xShift + Math.trunc(seqArrayItem.length / 10) * (nt10 + sp)+ nt10/17 + v * nt10/10)
+                                    .attr("y2", function () { return (v == 0 || v == 9 || v == 5) ? (yPos + 9) : (yPos + 8); });
+                }
+        }
+    }
+    
+    //complementary sequence
+    if(showComplementary){
+                    fcSeq.append("text")
+                        .attr("class", "noEvent")
+                        .attr("y", yPos + seqWidth)
+                        .attr("x", xShift)
+                        .style("text-anchor", "begin")
+                        .style("font-family", "monospace")
+                        .style("font-size", "13px")
+                        .style("fill", "#c7c7c7")
+                        .text(cSeqArray[i]);
+    }
+
+   ////////////////////////////////////////////////////
+
 
      featureHeight = fNewWdith === 0 ? featureWdith : fNewWdith;
     //cal the y pos based on enzymes
 
     yPos = yPos + seqTop + enzymeWidth  + seqWidth + featureHeight + seqBottom;
+    yPosArray.push(yPos);
     //cal the count 
     count = count + ntPerLine;
     }
-
     //draw vertical line after ntcount
     svgSeq.append("line")
             .style("stroke", "#c7c7c7")
@@ -585,11 +670,9 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
             .attr("y1", 5 - enzymeWidth- seqTop)             // y position of the first end of the line
             .attr("x2", xShift -5)     // x position of the second end of the line
             .attr("y2", yPos);    // y position of the second end of the line
-
+    
     return svgSeq;
   }
-
-
 
 function sortByProperty(property) {
     'use strict';
@@ -627,4 +710,34 @@ function formatName(name, type){
         }
     })
     return finalArray.join('')+"-"+type;
+}
+
+//add search div
+function addSearchDiv(id){
+    var html = '';
+    html += '<div class="col-xs-12 col-sm-8 col-md-6 pull-right">';
+        html +='<div class="input-group">';
+            html +='<span class="input-group-addon">Search </span>';
+            html +='<input type="text" class="form-control" placeholder="sequence" id="search-seq">';
+            html +='<span class="input-group-btn">';
+                html +='<button class="btn btn-default" type="button" id="ok-search"><i class="glyphicon glyphicon-search"></i></button>';
+                html +='<button class="btn btn-default" type="button" id="clear-search"><i class="glyphicon glyphicon-remove"></i></button>';
+            html +='</span>';
+        html +='</div>';
+    html +='</div><br/><br/>';
+
+    $(id).append(html);
+}
+
+//find all the indexes; for search
+function searchSeq(subSeq, sequence){
+    var indexArray =[];
+    for(index =0; index < (sequence.length - subSeq.length); index += subSeq.length){
+        index = sequence.indexOf(subSeq, index);
+        if(index ==-1){
+            return indexArray;
+        }
+        indexArray.push(index);
+    }
+    return indexArray;
 }
