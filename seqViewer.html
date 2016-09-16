@@ -15,8 +15,7 @@
   </head>
   <body>
       <div>
-          <div id="seqSearch">
-        </div>
+          <div id="seqSearch"></div>
         <div id="displaySeq"></div>
       </div>
   </body>
@@ -49,7 +48,6 @@
                   sequence: sequence, //sequence
                   features: features //feature array
               };
-
   //draw the seqViewer
   var sv = new seqViewer();
   sv.read(data);
@@ -58,5 +56,4 @@
   $(window).resize(function (){
       sv.redraw();
   });
-
 </script>

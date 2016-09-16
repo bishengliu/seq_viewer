@@ -23,8 +23,8 @@ function seqViewer(){
         var seqArray = []; //array for forward sequence
         var cSeqArray = []; //array for complementary sequence
         var searchArray =[]; //array for search
-
         var yPosArray =[];
+        var xShift = 25 // for adding count and vertical line
         //use d3 to display seq in text and as well as the features
         //div id is displaySeq
         //draw canvas
@@ -71,14 +71,47 @@ function seqViewer(){
             addSearchDiv(searchId);
         }
         
+        //search
         (function(){
             //remove all non letter in the seqeuce input
-            $('#search-seq').change(function () {
+            $('#search-seq').keyup(function () {
                 var before = $('#search-seq').val();
                 //strip out non-alpha characters and convert to uppercase
                 var after = before.replace(/[^a-zA-Z]+|\s+$|[0-9]+/g, '').toUpperCase();
                 after = after.replace(/[bdefhijklmnopqrsuvwxyzBDEFHIJKLMNOPQRSUVWZYX]+|\s+$|[0-9]+/g, '').toUpperCase();
                 $('#search-seq').val(after);
+
+                //remove all the rect with class "searchRect";
+                d3.selectAll("rect.searchRect").remove();
+                //make search
+                var text = $("#search-seq").val();
+                if(text != null || text != ""){
+                    //perform search and return the index
+                    var indexArray = searchSeq(text, sequence);              
+                    if(indexArray.length >0){
+                        //get all the index
+                        var postions =  genPositions(indexArray, text.length);
+                            //draw rect for search
+                            var index=0;
+                            var searchRect = d3.select("#seq-Search").append("g");
+                            for(i=0; i< seqArray.length; i++){
+                                for(s=0; s < searchArray[i].length; s++){
+                                    if(postions.indexOf(+searchArray[i][s]) != -1){
+                                        searchRect.append("rect")
+                                                            .attr("class", function(){ return searchArray[i][s] == ' '? "searchRect searchRect-space" : "searchRect searchRect-" + searchArray[i][s]; })
+                                                            .style("fill", "#e6e600")
+                                                            .style("opacity", 0.5)
+                                                            .attr("x", function(d){ return xShift + s * 7.15; })
+                                                            .attr("y", yPosArray[i] - seqWidth + 8)
+                                                            .attr("width", 7.15)
+                                                            .attr("height", seqWidth - 5);
+                                    }
+                                index++
+                                }
+                            }
+                    }
+                }
+                //end search
             });
         })();
 
@@ -86,7 +119,7 @@ function seqViewer(){
         var svg = drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom);
 
         //draw forward seq and complementary sequence
-        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray);
+        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift);
     }
 
     //redraw the seq viewer
@@ -105,7 +138,7 @@ function seqViewer(){
         var svg = drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom);
 
         //draw forward seq and complementary sequence
-        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray);
+        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift);
     }
 }
 
@@ -187,10 +220,9 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
 
 
  //draw sequence and features
-function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray) { 
+function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift) { 
     var yPos = 5;
     yPosArray.push(yPos);
-    var xShift = 25 // for adding count and vertical line
     var count = 1;
     var yShift = 10;
     //define 10nt width 70.16, sp = 8.50
@@ -519,36 +551,49 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
          }
      }
      ////////////////////////////////////////////////////
-     //need to implement to only draw the match index
-    //d3 search events
+    //d3 search events ok for search
     d3.select("#ok-search")
       .on("click", function(){
           //remove all the rect with class "searchRect";
+          d3.selectAll("rect.searchRect").remove();
+          //get the seach search
           var text = $("#search-seq").val();
           if(text != null || text != ""){
               //perform search and return the index
-              var indexArray = searchSeq(text, sequence);
+              var indexArray = searchSeq(text, sequence);              
               if(indexArray.length >0){
+                   //get all the index
+                   var postions =  genPositions(indexArray, text.length);
                     //draw rect for search
                     var index=0;
                     var searchRect = d3.select("#seq-Search").append("g");
                     for(i=0; i< seqArray.length; i++){
                         for(s=0; s < searchArray[i].length; s++){
-                            searchRect.append("rect")
-                                                    .attr("class", "searchRect")
-                                                    .attr("class", function(){ return searchArray[i][s] == ' '? "searchRect-space" : "searchRect-" + searchArray[i][s]; })
+                            if(postions.indexOf(+searchArray[i][s]) != -1){
+                                  searchRect.append("rect")
+                                                    .attr("class", function(){ return searchArray[i][s] == ' '? "searchRect searchRect-space" : "searchRect searchRect-" + searchArray[i][s]; })
                                                     .style("fill", "#e6e600")
                                                     .style("opacity", 0.5)
                                                     .attr("x", function(d){ return xShift + s * 7.15; })
                                                     .attr("y", yPosArray[i] - seqWidth + 8)
                                                     .attr("width", 7.15)
                                                     .attr("height", seqWidth - 5);
+                            }
                         index++
                         }
                     }
               }
           }
       })
+      //clean search
+      d3.select("#clear-search")
+        .on("click", function(){
+          //remove all the rect with class "searchRect";
+          d3.selectAll("rect.searchRect").remove();
+          //clear search input
+          $("#search-seq").val(null);          
+        })
+
     /////////////////////////////////////////////////////
     //draw the seq th elast to allow mouse selection of the seq
     //forward sequence
@@ -720,7 +765,7 @@ function addSearchDiv(id){
             html +='<span class="input-group-addon">Search </span>';
             html +='<input type="text" class="form-control" placeholder="sequence" id="search-seq">';
             html +='<span class="input-group-btn">';
-                html +='<button class="btn btn-default" type="button" id="ok-search"><i class="glyphicon glyphicon-search"></i></button>';
+                // html +='<button class="btn btn-default" type="button" id="ok-search"><i class="glyphicon glyphicon-search"></i></button>';
                 html +='<button class="btn btn-default" type="button" id="clear-search"><i class="glyphicon glyphicon-remove"></i></button>';
             html +='</span>';
         html +='</div>';
@@ -740,4 +785,16 @@ function searchSeq(subSeq, sequence){
         indexArray.push(index);
     }
     return indexArray;
+}
+
+//find all the positions of the search
+function genPositions(array, seqLength){
+    var outPut =[];
+    for(i=0; i < array.length; i++){
+        var item = array[i];
+        for(l=0; l< seqLength; l++){
+            outPut.push(item + l);
+        }
+    }
+    return outPut;
 }
