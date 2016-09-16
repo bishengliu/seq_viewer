@@ -3,7 +3,8 @@ function seqViewer(){
     var id ="",
         searchId = "",
         sequence = '',
-        features = [];
+        features = [],
+        enzymes = [];
     
         //other global variables
         //get the window width
@@ -42,11 +43,14 @@ function seqViewer(){
 
     
     this.read = function(json){
-        id = json.id;
+        id = json.id,
         searchId = json.searchId,
         sequence = json.sequence,
-        features = json.features;
+        features = json.features,
+        enzymes = json.enzymes;
 
+        features.sort(sortByProperty('start'));
+        enzymes.sort(sortByProperty('cut'));
         //set the global variables
         //get the window width
         wWidth = $(id).width() - 20 * 2; //padding on each side
@@ -119,7 +123,7 @@ function seqViewer(){
         var svg = drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom);
 
         //draw forward seq and complementary sequence
-        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift);
+        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift, enzymes);
     }
 
     //redraw the seq viewer
@@ -138,7 +142,7 @@ function seqViewer(){
         var svg = drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom);
 
         //draw forward seq and complementary sequence
-        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift);
+        var svgSeq= drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift, enzymes);
     }
 }
 
@@ -220,8 +224,8 @@ function drawSVG(id, arrayLength, seqTop, enzymeWidth, seqWidth, featureWdith, s
 
 
  //draw sequence and features
-function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift) { 
-    var yPos = 5;
+function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, enzymeWidth, seqWidth, featureWdith, seqBottom, ntPerLine, features, searchArray, yPosArray, xShift, enzymes) { 
+    var yPos = 25;
     yPosArray.push(yPos);
     var count = 1;
     var yShift = 10;
@@ -586,7 +590,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
           }
       })
       //clean search
-      d3.select("#clear-search")
+    d3.select("#clear-search")
         .on("click", function(){
           //remove all the rect with class "searchRect";
           d3.selectAll("rect.searchRect").remove();
@@ -608,7 +612,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                         .style("fill", "#636363")
                         .text(seqArray[i]);
     //add nt count
-                    fcSeq.append("text")
+    fcSeq.append("text")
                         .attr("y", yPos)
                         .attr("x", 0)
                         .attr("class", "noEvent")
@@ -700,8 +704,95 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
    ////////////////////////////////////////////////////
 
 
+    //get the enzymes lie in the range
+    var enzyArray = $.grep(enzymes, function(e, ei){
+        return e.cut >= seqStart && e.cut <= seqEnd;
+    });
+
+    var startRegion = 0;
+    var eRegion = 20; //length of one enzyme
+
+    //get totoal howmany regions
+    var regionNumber = Math.trunc(rectWidth/eRegion);
+    //left over width
+    var leftOver = rectWidth % eRegion;
+
+    var lineHeight = 10;  //emzyme line height, including labelHeight
+    var gap = 2;
+    var labelHeight = 5; //enzyme label
+    var labelWidth = 10;
+
+    var lLine = 0, lHeight = 0;
+    var rLine =0, rHeight = 0;
+
+    var enzySvg = svgSeq.append("g");
+
+    for(r=0; r < regionNumber; r++){
+
+        var leftEnzymes = $.grep(enzyArray, function(e, ei){
+                            var ePos = calRectWidth(rectWidth, ntPerLine, e.cut);
+                            return ePos > startRegion  && ePos <= startRegion + eRegion/2;
+                        });
+
+       var rightEnzymes = $.grep(enzyArray, function(e, ei){
+                            var ePos = calRectWidth(rectWidth, ntPerLine, e.cut);
+                            return ePos > startRegion + eRegion/2 && ePos <= startRegion + eRegion;
+                        });
+
+      //if right have enzymes
+      console.log(rightEnzymes.length);
+      //draw right enzymes
+      if(rightEnzymes.length >0){
+        rHeight = rightEnzymes.length * (labelHeight + gap) + lineHeight;
+        rLine = rHeight > rLine? rHeight: rLine;
+        $.each(rightEnzymes, function(ri, re){
+            //get svg
+            var ePos = calRectWidth(rectWidth, ntPerLine, re.cut);
+            var enzy= enzySvg.append("g");
+            enzy.append("line")
+                                    .style("stroke-width", 0.5)
+                                    .style("stroke", "black")
+                                    .attr("x1", ePos + 7.15/2)
+                                    .attr("y1", yPos - 10) 
+                                    .attr("x2", ePos + 7.15/2)
+                                    .attr("y2", yPos - 10 - lineHeight * ( 1 + ri ));
+            enzy.append("text")
+                                    .attr("y", yPos - 10 - lineHeight * ( 1 + ri ))
+                                    .attr("x", ePos)
+                                    .style("text-anchor", "end")
+                                    .style("font-family", "monospace")
+                                    .style("font-size", "13px")
+                                    .style("fill", "black")
+                                    .text(function(){ return re.name.split(' ')[0]; });
+        })
+      }
+
+
+      //draw left enzymes
+      if(leftEnzymes.length >0){
+          lHeight = leftEnzymes.length * (labelHeight + gap) + lineHeight;
+          lLine = lHeight > lLine? lHeight: lLine;
+          $.each(leftEnzymes, function(){
+              //need to draw for left
+          })
+      }
+
+
+        //move to next region
+        startRegion += eRegion;
+    }
+
+
+   //////////////////////////////////////////////////
+
+
+   //cal the feature height
      featureHeight = fNewWdith === 0 ? featureWdith : fNewWdith;
-    //cal the y pos based on enzymes
+    
+    
+    //cal the enzymeWidth
+    enzymeWidth = lLine + rLine < 10 ? 10 : lLine + rLine;
+    
 
     yPos = yPos + seqTop + enzymeWidth  + seqWidth + featureHeight + seqBottom;
     yPosArray.push(yPos);
