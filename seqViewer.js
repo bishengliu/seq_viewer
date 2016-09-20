@@ -452,13 +452,13 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                                 .style("stroke", fLine[l][k].color)
                                 .style("stroke-opacity", 0.6)
                                 .attr("x1", function(){
-                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+                                    var fStart = fLine[l][k].start <= seqStart ? 0: fLine[l][k].start % ntPerLine;
                                     return xShift + calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
                                 .attr("y1", yPos + prefNewWdith + (seqWidth - 3 + coStep) * (l + 1))
                                 .attr("x2", function(){
-                                    var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
-                                    return xShift +calRectWidth(rectWidth, ntPerLine, fEnd);
+                                    var fEnd = fLine[l][k].end >= seqEnd ? ntPerLine : fLine[l][k].end % ntPerLine;                                    
+                                    return xShift + calRectWidth(rectWidth, ntPerLine, fEnd);
                                 })
                                 .attr("y2", yPos + prefNewWdith + (seqWidth - 3 + coStep) * (l + 1));
                                 //add mous eevents
@@ -489,13 +489,13 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                                 .style("opacity", 0.0)
 
                                 .attr("x", function(){
-                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
+                                    var fStart = fLine[l][k].start <= seqStart? 0 : fLine[l][k].start % ntPerLine;
                                     return xShift + calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
                                 .attr("y", yPos - seqWidth)
                                 .attr("width", function(){
-                                    var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
-                                    var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
+                                    var fStart = fLine[l][k].start <= seqStart? 0 : fLine[l][k].start % ntPerLine;
+                                    var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end % ntPerLine;
                                     return calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
                                 .attr("height", 2*seqWidth+middleWidth);
@@ -509,7 +509,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                                 .attr("x", function(){
                                     var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
                                     var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
-                                    return xShift+ (calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart))/2 + calRectWidth(rectWidth, ntPerLine, fStart) - (fLine[l][k].name.split('').length + 10 ) * 7/2;
+                                    return xShift + (calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart))/2 + calRectWidth(rectWidth, ntPerLine, fStart) - (fLine[l][k].name.split('').length + 10 ) * 7/2;
                                 })
                                 .attr("y", yPos + prefNewWdith + (seqWidth - 3 + coStep) * (l+1))
                                 .attr("width", (fLine[l][k].name.split('').length + 10  ) * 7)
@@ -542,7 +542,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                                 .attr("x", function(){
                                     var fStart = fLine[l][k].start <= seqStart? 0: fLine[l][k].start - seqStart;
                                     var fEnd = fLine[l][k].end >= seqEnd? ntPerLine : fLine[l][k].end - seqStart;
-                                    return xShift+ (calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart))/2 + calRectWidth(rectWidth, ntPerLine, fStart);
+                                    return xShift + (calRectWidth(rectWidth, ntPerLine, fEnd) - calRectWidth(rectWidth, ntPerLine, fStart))/2 + calRectWidth(rectWidth, ntPerLine, fStart);
                                 })
                                 .style("text-anchor", "middle")
                                 .style("font-family", "monospace")
@@ -745,23 +745,23 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
             enzy.append("line")
                                     .style("stroke-width", 0.2)
                                     .style("stroke", "gray")
-                                    .attr("id", re.name.split(' ')[0] + '-' + re.cut +"-line")
-                                    .attr("x1", ePos) // + 7.15/2
+                                    .attr("id", re.name.split(' ')[0] + '-' + re.cut + "-line")
+                                    .attr("x1", xShift + ePos) // + 7.15/2
                                     .attr("y1", yPos - 10) 
-                                    .attr("x2", ePos) // + 7.15/2
+                                    .attr("x2", xShift + ePos) // + 7.15/2
                                     .attr("y2", yPos - 10 - (lineHeight + gap) * ( 1 + ri ));
            //add hidden rect behind each enzyem label for mouse event
             enzy.append("rect")
                                 .style("opacity", 0)
-                                .attr("x", ePos)
+                                .attr("x", xShift + ePos)
                                 .attr("y", yPos - 20 - (lineHeight + gap) * ( 1 + ri ))
                                 .attr("width", 20)
                                 .attr("height", 10);
 
             enzy.append("text")
                                     .attr("y", yPos - 10 - (lineHeight + gap)  * ( 1 + ri ))
-                                    .attr("x", ePos)
-                                    .attr("id", re.name.split(' ')[0] + '-' + re.cut +"-text")
+                                    .attr("x", xShift + ePos)
+                                    .attr("id", re.name.split(' ')[0] + '-' + re.cut + "-text")
                                     .attr("class", "noEvent")
                                     .style("text-anchor", "begin")
                                     .style("font-family", "monospace")
@@ -780,20 +780,18 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                 d3.select(textId).style("fill", "red");
                 //draw the enzyme area rect
                 var y = d3.select(lineId).attr("y1");
-                d3.select('svg').append("rect")
+                d3.select('#seqSVG').append("rect")
                     .attr("id",  d.name.split(' ')[0] + '-' + d.cut + "-shadow")
                     .style("fill", "red")
                     .style("opacity", 0.2)
-
                                 .attr("x", function(){                                    
-                                    return xShift+  + calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
+                                    return xShift + calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
                                 })
-                                .attr("y", y)
+                                .attr("y", +y)
                                 .attr("width", function(){
-                                    
                                     return calRectWidth(rectWidth, ntPerLine, +d.end % ntPerLine) - calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
                                 })
-                                .attr("height", 2*seqWidth+middleWidth);
+                                .attr("height", 2*seqWidth - 10);
             })
             .on("mouseout", function(d){
                 //get the ids
@@ -817,20 +815,20 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
               var enzy= enzySvg.append("g").data([le]);;
               //need to draw for left
               var ePos = calRectWidth(rectWidth, ntPerLine, le.cut % ntPerLine);
-              enzy.append("line")
+            enzy.append("line")
                                     .style("stroke-width", 0.2)
                                     .attr("id", le.name.split(' ')[0] + '-' + le.cut +"-line")
                                     .style("stroke", "gray")
-                                    .attr("x1", ePos) // + 7.15/2
+                                    .attr("x1", xShift + ePos) // + 7.15/2
                                     .attr("y1", yPos - 10) 
-                                    .attr("x2", ePos) // + 7.15/2
+                                    .attr("x2", xShift + ePos) // + 7.15/2
                                     .attr("y2", function(){
                                         return rHeight >0 ? yPos - 10 - (lineHeight + gap)  * ( li ) - rHeight:  yPos - 10 - (lineHeight + gap)  * ( 1 + li ) - rHeight;
                                     });
                                     //add hidden rect behind each enzyem label for mouse event
             enzy.append("rect")
                                 .style("opacity", 0)
-                                .attr("x", ePos)
+                                .attr("x", xShift + ePos)
                                 .attr("y", function(){
                                         return rHeight > 0 ? yPos - 20 - (lineHeight + gap)  * ( li ) - rHeight:  yPos - 20 - (lineHeight + gap)  * ( 1 + li ) - rHeight;
                                     })
@@ -841,7 +839,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                                     .attr("y", function(){
                                         return rHeight >0 ? yPos - 10 - (lineHeight + gap)  * ( li ) - rHeight:  yPos - 10 - (lineHeight + gap)  * ( 1 + li ) - rHeight;
                                     })
-                                    .attr("x", ePos)
+                                    .attr("x", xShift + ePos)
                                     .attr("id", le.name.split(' ')[0] + '-' + le.cut +"-text")
                                     .attr("class", "noEvent")
                                     .style("text-anchor", "begin")
@@ -858,20 +856,19 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                 d3.select(textId).style("fill", "red");
                 //draw the enzyme area rect
                 var y = d3.select(lineId).attr("y1");
-                d3.select('svg').append("rect")
+                d3.select('#seqSVG').append("rect")
                     .attr("id",  d.name.split(' ')[0] + '-' + d.cut + "-shadow")
                     .style("fill", "red")
                     .style("opacity", 0.2)
-
-                                .attr("x", function(){                                    
-                                    return xShift+  + calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
+                                .attr("x", function(){
+                                    var sPos = calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
+                                    return xShift + sPos;
                                 })
-                                .attr("y", y)
-                                .attr("width", function(){
-                                    
-                                    return calRectWidth(rectWidth, ntPerLine, +d.end % ntPerLine) - calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
+                                .attr("y", +y)
+                                .attr("width", function(){                                    
+                                    return calRectWidth(rectWidth, ntPerLine, (+d.end) % ntPerLine) - calRectWidth(rectWidth, ntPerLine, (+d.start) % ntPerLine);
                                 })
-                                .attr("height", 2*seqWidth+middleWidth);           
+                                .attr("height", 2*seqWidth - 10);           
             })
             .on("mouseout", function(d){
                 //get the ids
@@ -945,7 +942,15 @@ function reverseSortByProperty(property) {
 
 //cal the rectWidth
 function calRectWidth(totalWidth, ntPerLine, ntPos){
-    return (ntPos + Math.round(ntPos / 10 ))/(ntPerLine + Math.round(ntPerLine / 10)) * totalWidth;
+    if(ntPos % 10 == 0){
+            return ntPos/ntPerLine * totalWidth;
+    }
+    else{
+        //hard-coded
+        return Math.trunc(ntPos / 10) * ((70.16+ 8.50)) + (ntPos % 10 * 70.16/10); 
+    }
+    // + Math.round(ntPos / 10 )
+    // + Math.round(ntPerLine / 10)
 }
 
 //format feature for class
