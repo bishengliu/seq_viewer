@@ -9,7 +9,6 @@ function seqViewer(){
         //other global variables
         //get the window width
         var wWidth = 0; //padding on each side
-        //define 10nt width 70.16, sp = 8.50
         var ntPerLine = 0; //nt10 and sp 
         //ntPerLine: the number of nt perline
         //var ntPerLine = 230;
@@ -89,7 +88,9 @@ function seqViewer(){
                 d3.selectAll("rect.searchRect").remove();
                 //make search
                 var text = $("#search-seq").val();
-                if(text != null || text != ""){
+                console.log(text);
+                debugger;
+                if(text != null && text != ""){
                     //perform search and return the index
                     var indexArray = searchSeq(text, sequence);              
                     if(indexArray.length >0){
@@ -599,7 +600,7 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
         })
 
     /////////////////////////////////////////////////////
-    //draw the seq th elast to allow mouse selection of the seq
+    //draw the seq the last to allow mouse selection of the seq
     //forward sequence
     var fcSeq = svgSeq.append("g");
     //draw seq the last
@@ -779,19 +780,20 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                 d3.select(lineId).style("stroke", "red");
                 d3.select(textId).style("fill", "red");
                 //draw the enzyme area rect
-                var y = d3.select(lineId).attr("y1");
+                //ignore the enyzme that span two lines //////////////////////////////////////////////////////////////////////
+                var y = yPosArray[Math.trunc(+d.start / ntPerLine)];
                 d3.select('#seqSVG').append("rect")
                     .attr("id",  d.name.split(' ')[0] + '-' + d.cut + "-shadow")
-                    .style("fill", "red")
+                    .style("fill", "#3b3eac")
                     .style("opacity", 0.2)
                                 .attr("x", function(){                                    
                                     return xShift + calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
                                 })
-                                .attr("y", +y)
+                                .attr("y", +y-15)
                                 .attr("width", function(){
                                     return calRectWidth(rectWidth, ntPerLine, +d.end % ntPerLine) - calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
                                 })
-                                .attr("height", 2*seqWidth - 10);
+                                .attr("height", 2*seqWidth );
             })
             .on("mouseout", function(d){
                 //get the ids
@@ -855,20 +857,21 @@ function drawSeq(svg, seqArray, symbol, showComplementary, cSeqArray, seqTop, en
                 d3.select(lineId).style("stroke", "red");
                 d3.select(textId).style("fill", "red");
                 //draw the enzyme area rect
-                var y = d3.select(lineId).attr("y1");
+                //ignore the enyzme that span two lines //////////////////////////////////////////////////////////////////////
+                var y = yPosArray[Math.trunc(+d.start / ntPerLine)];
                 d3.select('#seqSVG').append("rect")
                     .attr("id",  d.name.split(' ')[0] + '-' + d.cut + "-shadow")
-                    .style("fill", "red")
+                    .style("fill", "#3b3eac")
                     .style("opacity", 0.2)
                                 .attr("x", function(){
                                     var sPos = calRectWidth(rectWidth, ntPerLine, +d.start % ntPerLine);
                                     return xShift + sPos;
                                 })
-                                .attr("y", +y)
+                                .attr("y", +y-15)
                                 .attr("width", function(){                                    
                                     return calRectWidth(rectWidth, ntPerLine, (+d.end) % ntPerLine) - calRectWidth(rectWidth, ntPerLine, (+d.start) % ntPerLine);
                                 })
-                                .attr("height", 2*seqWidth - 10);           
+                                .attr("height", 2*seqWidth);           
             })
             .on("mouseout", function(d){
                 //get the ids
@@ -946,11 +949,9 @@ function calRectWidth(totalWidth, ntPerLine, ntPos){
             return ntPos/ntPerLine * totalWidth;
     }
     else{
-        //hard-coded
+        //hard-coded //see line 56
         return Math.trunc(ntPos / 10) * ((70.16+ 8.50)) + (ntPos % 10 * 70.16/10); 
     }
-    // + Math.round(ntPos / 10 )
-    // + Math.round(ntPerLine / 10)
 }
 
 //format feature for class
